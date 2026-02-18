@@ -1,0 +1,18 @@
+{
+    "cSpell.enabledFileTypes": {
+        "cpp": true
+    },
+    "cSpell.words": [
+        "ABRT",
+        "minconpty",
+        "minpty"
+    ],
+    "vim.scrolloff": 0,
+    "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
+        "clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling"
+    ],
+    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 2, ColumnLimit: 0}",
+    "files.associations": {
+        "err.h": "c"
+    }
+}
