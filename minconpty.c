@@ -1,7 +1,17 @@
-/*
- * minconpty - A pseudo-TTY launcher for Windows
- *
- * Uses the ConPTY API (Windows 10 1809+) to run a child process
+/* minconpty.c - A pseudo-TTY launcher for Windows
+ * See https://github.com/fordsfords/minpty for documentation. */
+
+/* This work is dedicated to the public domain under CC0 1.0 Universal:
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ * 
+ * To the extent possible under law, Steven Ford has waived all copyright
+ * and related or neighboring rights to this work. In other words, you can 
+ * use this code for any purpose without any restrictions.
+ * This work is published from: United States.
+ * Project home: https://github.com/fordsfords/minpty
+ */
+
+/* Uses the ConPTY API (Windows 10 1809+) to run a child process
  * inside a pseudo-console.  The child believes it has a real
  * console, enabling automation of interactive console programs
  * (similar to Unix "expect").
@@ -11,17 +21,9 @@
  *   child's console output  -->  pty output pipe  -->  our stdout
  *
  * Works with redirected stdin/stdout:
- *   minconpty cmd < script.txt > output.log
+ *   minconpty cmd < input.txt > output.log
  *
  * Also works interactively (stdin/stdout connected to a console).
- *
- * Usage: minconpty <command> [args...]
- *
- * Build (MSVC):
- *   cl /W4 minconpty.c
- *
- * Build (MinGW-w64):
- *   gcc -Wall -o minconpty.exe minconpty.c
  *
  * Requires Windows SDK 10.0.17763.0 or later for ConPTY headers.
  */

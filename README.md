@@ -47,6 +47,8 @@ See the source code for detailed design notes.
 
 * `bld.bat` batch file compiles `minconpty` with cl.
 
+* `tst.bat` batch file runs `bld.bat` and then does a basic test.
+
 ## License
 
 I want there to be NO barriers to using this code, so I am releasing it to the public domain.  But "public domain" does not have an internationally agreed upon definition, so I use CC0:

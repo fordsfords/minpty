@@ -1,7 +1,17 @@
-/*
- * minpty - A simplified "script" using pseudo-TTYs
- *
- * Demonstrates how programs like script(1) work:
+/* minpty.c - A pseudo-TTY launcher for Windows
+ * See https://github.com/fordsfords/minpty for documentation. */
+
+/* This work is dedicated to the public domain under CC0 1.0 Universal:
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ * 
+ * To the extent possible under law, Steven Ford has waived all copyright
+ * and related or neighboring rights to this work. In other words, you can 
+ * use this code for any purpose without any restrictions.
+ * This work is published from: United States.
+ * Project home: https://github.com/fordsfords/minpty
+ */
+
+/* Demonstrates how programs like script(1) work:
  *   1. Create a pseudo-TTY pair (master/slave)
  *   2. Fork a child that runs a command on the slave side
  *   3. Parent shuttles data between stdin/stdout and the pty master
