@@ -12,6 +12,9 @@ Unfortunately, I don't have the Windows expertise to make the same claim for min
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Table of contents](#table-of-contents)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Introduction](#introduction)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Included Scripts](#included-scripts)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Windows Notes](#windows-notes)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Why handle_vt_queries() exists](#why-handle_vt_queries-exists)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Underdocumented ConPTY behaviors](#underdocumented-conpty-behaviors)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [License](#license)  
 <!-- TOC created by '../mdtoc/mdtoc.pl ./README.md' (see https://github.com/fordsfords/mdtoc) -->
 <!-- mdtoc-end -->
@@ -53,6 +56,74 @@ See the source code for detailed design notes.
 
 * `tst.bat` batch file runs `bld.bat` and then does a basic test with vim.
   (Expects vim to be installed and on the PATH.)
+
+## Windows Notes
+
+### Why handle_vt_queries() exists
+
+On Unix, the kernel's PTY layer is a transparent bidirectional byte pipe.
+The kernel doesn't interpret VT sequences at all.
+Queries originate from the child, flow passively through the PTY master side,
+and most Unix programs handle missing responses gracefully via timeouts
+or avoid runtime queries entirely by using terminfo/termcap.
+
+ConPTY is fundamentally different.
+It has `conhost.exe` sitting in the middle, actively interpreting the VT
+stream in both directions.
+Conhost itself generates VT query sequences (DSR, Device Attributes, etc.)
+on the output pipe and expects responses on the input pipe — these queries
+don't even originate from the child process.
+When running headless with no real terminal attached, nothing answers
+those queries unless `handle_vt_queries()` does.
+
+Beyond conhost's own queries, many child programs (shells, ncurses/readline
+programs, vim, less, etc.) send DA or DSR sequences during startup regardless
+of whether they're being scripted or used interactively.
+Unanswered queries can cause hangs or degraded behavior.
+Since the whole point of ConPTY is to make the child believe it has a real
+terminal, something needs to be answering.
+
+### Underdocumented ConPTY behaviors
+
+Several behaviors discovered during development are poorly documented
+by Microsoft:
+
+**Handle inheritance into conhost.**
+`CreatePseudoConsole()` internally spawns `conhost.exe`, which inherits
+all inheritable handles from the calling process.
+To prevent handle leakage, you must explicitly clear the inherit flag
+on every handle that conhost shouldn't receive (our ends of the pipes,
+stdin, stdout) using `SetHandleInformation()`.
+Only the two pipe ends that ConPTY needs (`pty_in_rd`, `pty_out_wr`)
+should remain inheritable.
+
+**Standard handle propagation via the PEB.**
+Windows propagates the parent's standard handles to the child process
+through the Process Environment Block (PEB), regardless of the
+`bInheritHandles` parameter to `CreateProcess`.
+If the parent's stdin/stdout are redirected to files, the child receives
+those file handles *instead of* the ConPTY's console handles.
+The workaround is to temporarily clear the parent's standard handles
+(`SetStdHandle(..., NULL)`) before `CreateProcess` and restore them
+immediately after.
+This forces the child to get its handles exclusively from the
+pseudo-console.
+
+**Pipe lifetime across ClosePseudoConsole.**
+`CreatePseudoConsole()` may not duplicate the pipe handles it receives
+(`pty_in_rd`, `pty_out_wr`) internally.
+Closing these handles before calling `ClosePseudoConsole()` can cause
+the child to see a premature EOF and exit.
+Both must remain open until after the pseudo-console is closed.
+
+**ESC byte disambiguation.**
+ConPTY's VT parser cannot distinguish a bare Escape keypress from the
+first byte of a multi-byte VT escape sequence without a timing gap.
+When feeding input from a file or pipe (where bytes arrive at full speed),
+a short delay after each ESC byte (`Sleep(75)` in our implementation)
+gives the parser time to recognize it as a standalone keypress.
+Interactive input doesn't need this because human typing provides
+natural pacing.
 
 ## License
 
