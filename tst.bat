@@ -5,6 +5,7 @@ call bld.bat
 if errorlevel 1 exit /b 1
 
 del /q tst.x tst.tmp tst.log 2>nul
+del /q /a:h .tst.tmp.swp 2>nul
 
 minconpty.exe vim tst.tmp <tst.cr >tst.log
 

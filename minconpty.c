@@ -44,7 +44,7 @@
 /* Delay in ms after writing ESC to pty input.  Gives ConPTY's VT
  * parser time to recognize a bare Escape keypress vs. the start
  * of a VT escape sequence. */
-#define ESC_DELAY_MS 75
+#define ESC_DELAY_MS 50
 
 /* Data I/O handles - may be console, file, or pipe. */
 static HANDLE g_data_in  = INVALID_HANDLE_VALUE;
@@ -187,31 +187,6 @@ typedef struct {
 
 
 /*
- * Write a buffer to the pty input pipe, one byte at a time.
- * After each ESC byte, pause to let ConPTY's VT parser timeout
- * recognize it as a bare Escape keypress rather than the start
- * of a VT escape sequence.
- *
- * When stdin is a console (interactive use), the human provides
- * natural pacing and this function is not used.
- */
-static int write_paced(HANDLE pty_in_wr, const char *buf, DWORD len) {
-  DWORD i;
-  DWORD n_written;
-
-  for (i = 0; i < len; i++) {
-    if (!WriteFile(pty_in_wr, &buf[i], 1, &n_written, NULL))
-      return -1;
-
-    if (buf[i] == '\x1b')
-      Sleep(ESC_DELAY_MS);
-  }
-
-  return 0;
-}  /* write_paced */
-
-
-/*
  * Thread: read from data stdin, write to pty input pipe.
  * Runs until read fails (EOF) or pipe write fails (child exited).
  *
@@ -223,16 +198,21 @@ static DWORD WINAPI stdin_to_pty(LPVOID arg) {
   HANDLE pty_in_wr = (HANDLE)arg;
   char buf[BUF_SIZE];
   DWORD n_read, n_written;
-  int is_console = (GetFileType(g_data_in) == FILE_TYPE_CHAR);
+  DWORD i;
 
-  while (ReadFile(g_data_in, buf, sizeof(buf), &n_read, NULL)
-         && n_read > 0) {
-    if (is_console) {
-      if (!WriteFile(pty_in_wr, buf, n_read, &n_written, NULL))
+  while (ReadFile(g_data_in, buf, sizeof(buf), &n_read, NULL) && n_read > 0) {
+    /*
+     * Write the buffer to the pty input pipe, one byte at a time.
+     * After each ESC byte, pause to let ConPTY's VT parser timeout
+     * recognize it as a bare Escape keypress rather than the start
+     * of a VT escape sequence.
+     */
+    for (i = 0; i < n_read; i++) {
+      if (!WriteFile(pty_in_wr, &buf[i], 1, &n_written, NULL))
         break;
-    } else {
-      if (write_paced(pty_in_wr, buf, n_read) < 0)
-        break;
+
+      if (buf[i] == '\x1b')
+        Sleep(ESC_DELAY_MS);
     }
   }
 
