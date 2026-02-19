@@ -18,12 +18,12 @@ Unfortunately, I don't have the Windows expertise to make the same claim for min
 
 ## Introduction
 
-The `minpty` program runs a command inside a pseudo-TTY so that the
+The `minpty` Linux program runs a command inside a pseudo-TTY so that the
 child process believes it is connected to a real terminal.
-This is the same basic mechanism used by `script(1)`, `expect`, terminal
+This is the same basic mechanism used by `expect`, terminal
 emulators, and similar tools.
 
-The `minconpty` is the Windows equivalent program.
+`minconpty` is the Windows equivalent program.
 
 My expectation is that this code will be used as cut-and-paste fodder.
 
@@ -34,8 +34,12 @@ minpty <command> [args...]
 
 For example:
 ````
-./minpty vi myfile.txt
+./minpty vim myfile.txt <vi_cmds.txt >vi_output.log
 ````
+This will run the vim text editor which will think it is connected
+to an interactive terminal but actually is getting its commands
+from a file. Note that the log file will contain cursor addressing
+sequences as would be sent to a terminal.
 
 See the source code for detailed design notes.
 
@@ -43,11 +47,12 @@ See the source code for detailed design notes.
 
 * `bld.sh` script compiles `minpty` with gcc.
 
-* `tst.sh` script runs `bld.sh` and then does a basic test.
+* `tst.sh` script runs `bld.sh` and then does a basic test with vim.
 
 * `bld.bat` batch file compiles `minconpty` with cl.
 
-* `tst.bat` batch file runs `bld.bat` and then does a basic test.
+* `tst.bat` batch file runs `bld.bat` and then does a basic test with vim.
+  (Expects vim to be installed and on the PATH.)
 
 ## License
 
