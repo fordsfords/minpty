@@ -119,11 +119,8 @@ Both must remain open until after the pseudo-console is closed.
 **ESC byte disambiguation.**
 ConPTY's VT parser cannot distinguish a bare Escape keypress from the
 first byte of a multi-byte VT escape sequence without a timing gap.
-When feeding input from a file or pipe (where bytes arrive at full speed),
-a short delay after each ESC byte (`Sleep(75)` in our implementation)
+When feeding input, a short delay (ESC_DELAY_MS) after each ESC byte
 gives the parser time to recognize it as a standalone keypress.
-Interactive input doesn't need this because human typing provides
-natural pacing.
 
 ## License
 
