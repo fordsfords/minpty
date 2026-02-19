@@ -13,4 +13,4 @@ __EOF__
 T="`cat tst.tmp`"
 if [ "$T" != "hello" ]; then echo "ERROR"; exit 1; fi
 
-exit
+echo "Test passed"
