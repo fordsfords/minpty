@@ -6,11 +6,7 @@ if errorlevel 1 exit /b 1
 
 del /q tst.x tst.tmp tst.log 2>nul
 
-echo echo hello ^>tst.tmp >tst.x
-echo type tst.tmp >> tst.x
-echo exit >> tst.x
-
-minconpty.exe cmd <tst.x >tst.log
+minconpty.exe vim tst.tmp <tst.cr >tst.log
 
 if not exist tst.tmp (
   echo ERROR: tst.tmp was not created.
